@@ -11,3 +11,9 @@
 (defun start-over ()
   (defparameter *small* 1)
   (defparameter *big* 100))
+
+;;; The let command, to define local variables
+;;; (local to the let's body that is)
+(let ((a 5)
+      (b 2))
+  (+ a b))
