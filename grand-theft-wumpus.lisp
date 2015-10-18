@@ -7,7 +7,7 @@
 (defparameter *node-num* 30)
 (defparameter *edge-num* 45)
 (defparameter *worm-num* 3)
-(defparameter *cops-odds 15)
+(defparameter *cops-odds* 15)
 
 (defun random-node ()
   (1+ (random *node-num*)))
@@ -72,7 +72,7 @@
                       (unconnected (set-difference nodes connected)))
                  (push connected islands)
                  (when unconnected
-                   (find-island unconeected)))))
+                   (find-island unconnected)))))
       (find-island nodes))
     islands))
 
@@ -125,10 +125,10 @@
               (cons node1
                     (mapcar (lambda (edge)
                               (let ((node2 (car edge)))
-                                (if (intesection (edge-pair node1 node2)
+                                (if (intersection (edge-pair node1 node2)
                                                  edges-with-cops
                                                  :test #'equal)
-                                    (list node2 cops)
+                                    (list node2 'cops)
                                     edge)))
                             node1-edges))))
           edge-alist))
