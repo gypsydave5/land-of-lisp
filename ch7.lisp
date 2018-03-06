@@ -112,5 +112,12 @@
                    :direction :output
                    :if-exists :supersede)
     (funcall thunk))
-  (sb-ext:run-program "/bin/sh" (list "-c" (concatenate 'string "dot -Tpng -O " fname))))
+  (sb-ext:run-program "/bin/sh"
+                      (list "-c" (concatenate 'string "dot -Tpng -O " fname))))
 
+(defun graph->png (fname nodes edges)
+  (dot->png fname
+            (lambda ()
+              (graph->dot nodes edges))))
+
+(graph->png "check-out-my-graph" *nodes* *edges*)
