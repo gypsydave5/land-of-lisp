@@ -3,6 +3,8 @@
 (defpackage grand-theft-wumpus
   (:use #:common-lisp))
 
+(in-package #:grand-theft-wumpus)
+
 (defparameter *congestion-city-nodes* nil)
 (defparameter *congestion-city-edges* nil)
 (defparameter *visited-nodes* nil)
@@ -13,9 +15,11 @@
 
 (defun random-node ()
   (1+ (random *node-num*)))
+
 (defun edge-pair (a b)
   (unless (eql a b)
     (list (cons a b) (cons b a))))
+
 (defun make-edge-list ()
   (apply #'append (loop repeat *edge-num*
                      collect (edge-pair (random-node)
@@ -49,6 +53,16 @@
                    (find-island unconnected)))))
       (find-island nodes))
     islands))
+
+(defun find-islands (nodes edge-list)
+  (labels ((recur (nodes islands)
+             (let* ((connected (get-connected (car nodes) edge-list))
+                    (unconnected (set-difference nodes connected))
+                    (next-islands (cons connected islands)))
+               (if unconnected
+                   (recur unconnected next-islands)
+                   next-islands))))
+    (recur nodes '())))
 
 (defun connect-with-bridges (islands)
   (when (cdr islands)

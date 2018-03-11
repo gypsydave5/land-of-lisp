@@ -6,14 +6,14 @@
 
 (in-package #:grand-theft-wumpus-test)
 
-(defparameter *test-nodes* '(1 2 3 4 ))
+(defparameter *test-nodes* '(1 2 3 4 5))
 (defparameter *test-edges* '((5 . 1) (1 . 5) (3 . 4) (4 . 3) (2 . 3) (3 . 2)))
 
 (define-test direct-edges-test
   (assert-equal (car (direct-edges 1 *test-edges*)) (cons 1 5))
   (let ((edges (direct-edges 3 *test-edges*)))
-    (assert-true (contains-edge '(3 . 2) edges))
-    (assert-true (contains-edge '(3 . 4) edges))))
+    (assert-true (member '(3 . 2) edges :test #'equal))
+    (assert-true (member '(3 . 4) edges :test #'equal))))
 
 (define-test get-connected-test
   "get connected returns a list including all the nodes a node is connected to"
