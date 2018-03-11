@@ -1,5 +1,8 @@
 (load "graph-util.lisp")
 
+(defpackage grand-theft-wumpus
+  (:use #:common-lisp))
+
 (defparameter *congestion-city-nodes* nil)
 (defparameter *congestion-city-edges* nil)
 (defparameter *visited-nodes* nil)
@@ -54,5 +57,3 @@
 
 (defun connect-all-islands (nodes edge-list)
   (append (connect-with-bridges (find-islands nodes edge-list)) edge-list))
-
-
