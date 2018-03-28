@@ -42,4 +42,39 @@
     (assert-true (set-equal *test-nodes* (get-connected 4 connected-edges)))
     (assert-true (set-equal *test-nodes* (get-connected 5 connected-edges)))))
 
+(define-test make-city-edges-test
+  (let ((*node-num* 1))
+    (assert-equal (make-city-edges (lambda (x) t))
+                  '((1 (2 cops)) (2 (1 cops))))
+    (assert-equal (make-city-edges (lambda (x) nil))
+                  '((1 (2)) (2 (1))))))
+
+
+(define-test edges-to-alist
+  (assert-equal (edges-to-alist *test-edges*)
+                '((5 (1)) (1 (5)) (4 (3)) (2 (3)) (3 (4) (2)))))
+
+(define-test add-cops-test
+  (let ((alist '((1 (2)) (2 (1) (3)) (3 (2))))
+        (cops '((3 . 2))))
+    (assert-equal (add-cops alist cops)
+                  '((1 (2)) (2 (1) (3 COPS)) (3 (2 COPS))))))
+
+(define-test neighbors-test
+  (assert-equal (neighbors 1 '((1 (2) (3) (7))))
+                '(2 3 7)))
+
+(define-test within-one-test
+  (assert-true (within-one 1 2 '((1 (2) (3)))))
+  (assert-false (within-one 1 5 '((1 (2) (3)) (3 (4) (5 COPS))))))
+
+(define-test within-two-test
+  (assert-true (within-two 1 5 '((1 (2) (3)) (3 (4) (5 COPS))))))
+
+(define-test within-n-test
+  (assert-true (within-n 1 1 2 '((1 (2) (3)))))
+  (assert-false (within-n 1 1 5 '((1 (2) (3)) (3 (4) (5 COPS)))))
+  (assert-true (within-n 2 1 2 '((1 (2) (3)))))
+  (assert-true (within-n 2 1 5 '((1 (2) (3)) (3 (4) (5))))))
+
 (run-tests :all)

@@ -12,6 +12,7 @@
 (defparameter *edge-num* 45)
 (defparameter *worm-num* 3)
 (defparameter *cop-odds* 15)
+(defparameter *player-pos* nil)
 
 (defun random-node ()
   (1+ (random *node-num*)))
@@ -71,3 +72,127 @@
 
 (defun connect-all-islands (nodes edge-list)
   (append (connect-with-bridges (find-islands nodes edge-list)) edge-list))
+
+(defun is-cop (_)
+  (zerop (random *cop-odds*)))
+
+(defun make-city-edges (copp)
+  (let* ((nodes (loop for i from 1 to *node-num*
+                   collect i))
+         (edge-list (connect-all-islands nodes (make-edge-list)))
+         (cops (remove-if-not copp
+                              edge-list)))
+    (add-cops (edges-to-alist edge-list) cops)))
+
+(defun edges-to-alist (edge-list)
+  (mapcar (lambda (node1)
+            (cons node1
+                  (mapcar (lambda (edge) (list (cdr edge)))
+                          (remove-duplicates (direct-edges node1 edge-list)
+                                             :test #'equal))))
+          (remove-duplicates (mapcar #'car edge-list))))
+
+(defun add-cops (edge-alist edges-with-cops)
+  (mapcar (lambda (x)
+            (let ((node1 (car x))
+                  (node1-edges (cdr x)))
+              (cons node1
+                    (mapcar (lambda (edge)
+                              (let ((node2 (car edge)))
+                                (if (intersection (edge-pair node1 node2)
+                                                  edges-with-cops
+                                                  :test #'equal)
+                                    (list node2 'cops)
+                                    edge)))
+                            node1-edges))))
+          edge-alist))
+
+(defun neighbors (node edge-alist)
+  (mapcar #'car (cdr (assoc node edge-alist))))
+
+(defun within-n (n a b edge-alist)
+  (cond ((= 0 n) nil)
+        ((= 1 n) (member b (neighbors a edge-alist)))
+        (t (some (lambda (x) (within-n (1- n) x b edge-alist))
+                 (neighbors a edge-alist)))))
+
+(defun within-one (a b edge-alist)
+  (within-n 1 a b edge-alist))
+
+(defun within-two (a b edge-alist)
+  (within-n 2 a b edge-alist))
+
+(defun make-city-nodes (edge-alist)
+  (let ((wumpus (random-node))
+        (glow-worms (loop for i below *worm-num*
+                       collect (random-node))))
+    (loop for n from 1 to *node-num*
+       collect (append (list n)
+                       (cond ((eql n wumpus) '(wumpus))
+                             ((within-two n wumpus edge-alist) '(blood!)))
+                       (cond ((member n glow-worms)
+                              '(glow-worm))
+                             ((some (lambda (worm)
+                                      (within-one n worm edge-alist))
+                                    glow-worms)
+                              '(lights!)))
+                       (when (some #'cdr (cdr (assoc n edge-alist)))
+                         '(sirens!))))))
+
+(defun new-game ()
+  (setf *congestion-city-edges* (make-city-edges #'is-cop))
+  (setf *congestion-city-nodes* (make-city-nodes *congestion-city-edges*))
+  (setf *player-pos* (find-empty-node))
+  (setf *visited-nodes* (list *player-pos*))
+  (draw-city)
+  (draw-known-city))
+
+(defun find-empty-node ()
+  (let ((x (random-node)))
+    (if (cdr (assoc x *congestion-city-nodes*))
+        (find-empty-node)
+        x)))
+
+(defun draw-city ()
+  (ugraph->png "city" *congestion-city-nodes* *congestion-city-edges*))
+
+(defun known-city-nodes ()
+  (mapcar (lambda (node)
+            (if (member node *visited-nodes*)
+                (let ((n (assoc node *congestion-city-nodes*)))
+                  (if (eql node *player-pos*)
+                      (append n '(*))
+                      n))
+                (list node '?)))
+          (remove-duplicates
+           (append *visited-nodes*
+                   (mapcan (lambda (node)
+                             (mapcar #'car
+                                     (cdr (assoc node
+                                                 *congestion-city-edges*))))
+                           *visited-nodes*)))))
+
+(defun known-city-edges ()
+  (mapcar (lambda (node)
+            (cons node (mapcar (lambda (x)
+                                 (if (member (car x) *visited-nodes*)
+                                     x
+                                     (list (car x))))
+                               (cdr (assoc node *congestion-city-edges*)))))
+          *visited-nodes*))
+
+(defun draw-known-city ()
+  (ugraph->png "known-city" (known-city-nodes) (known-city-edges)))
+
+(defun walk (pos)
+  (handle-direction pos nil))
+
+(defun charge (pos)
+  (handle-direction pos t))
+
+(defun handle-direction (pos charging)
+  (let ((edge (assoc pos (cdr (assoc *player-pos* *congestion-city-edges*)))))
+    (if edge
+        (handle-new-place edge pos charging)
+        (princ "That location does not exist!"))))
+
