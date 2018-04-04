@@ -46,8 +46,11 @@
                    :direction :output
                    :if-exists :supersede)
     (funcall thunk))
-  (sb-ext:run-program "/bin/sh"
-                      (list "-c" (concatenate 'string "dot -Tpng -O " fname))))
+  (ext:shell (concatenate 'string "dot -Tpng -O " fname))
+  ;; (sb-ext:run-program
+  ;;  "/bin/sh"
+  ;;  (list "-c" (concatenate 'string "dot -Tpng -O " fname)))
+  )
 
 (defun graph->png (fname nodes edges)
   (dot->png fname
